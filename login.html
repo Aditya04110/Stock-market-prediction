@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Stock Prediction AI</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Dashboard Theme CSS -->
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <style>
+        body {
+            background: var(--background-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-primary);
+        }
+
+        .login-container {
+            max-width: 450px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: var(--background-secondary);
+            padding: 40px;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .login-header i {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .login-header h3 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .login-header p {
+            margin: 5px 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .login-body {
+            padding: 40px;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+        }
+
+        .input-group-text {
+            background: var(--input-bg);
+            border: 2px solid var(--border-color);
+            border-right: none;
+            border-radius: 10px 0 0 10px;
+            color: var(--text-secondary);
+        }
+
+        .input-group .form-control {
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .btn-login {
+            background: var(--accent-blue);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+            color: white;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.25);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .toggle-auth {
+            text-align: center;
+            margin-top: 15px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .toggle-auth a {
+            color: var(--accent-blue);
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .toggle-auth a:hover {
+            text-decoration: underline;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .demo-info {
+            background: var(--background-secondary);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .demo-info strong {
+            color: var(--accent-blue);
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #222;
+            border-top: 2px solid var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn-login.loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-login.loading .loading-spinner {
+            display: inline-block;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fas fa-chart-line"></i>
+                <h3>Stock Prediction</h3>
+                <p>LSTM Neural Network System</p>
+            </div>
+            
+            <div class="login-body">
+                <!-- Alert Container -->
+                <div id="alertContainer"></div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="hidden">
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <input type="email" id="loginEmail" class="form-control" placeholder="your@email.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" id="loginPassword" class="form-control" placeholder="Enter password" required>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-login" id="loginBtn" onclick="handleLogin()">
+                        <span class="loading-spinner"></span>
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                </form>
+
+                <!-- Signup Form -->
+                <form id="signupForm">
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <input type="email" id="signupEmail" class="form-control" placeholder="your@email.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" id="signupPassword" class="form-control" placeholder="Min 6 characters" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm password" required>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-login" id="signupBtn" onclick="handleSignup()">
+                        <span class="loading-spinner"></span>
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                </form>
+
+                <!-- Toggle Between Login and Signup -->
+                <div class="toggle-auth">
+                    <span id="toggleText">Don't have an account? <a onclick="toggleAuthForm()">Sign Up</a></span>
+                </div>
+
+                <!-- Demo Info -->
+                <div class="demo-info">
+                    <i class="fas fa-info-circle"></i> <strong>Firebase Authentication</strong><br>
+                    Email-based sign in with automatic token management<br>
+                    <small style="color: #999;">Credentials stored securely in Firebase</small>
+                </div>
+
+                <div class="login-footer">
+                    <strong>B.Sc. IT Final Year Project</strong><br>
+                    Students: Mansi Nagda (145), Aditya Chaudhari (111)<br>
+                    Guide: Mrs. Archana Jadhav<br>
+                    Anna Leela College, University of Mumbai
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase v10 Modular SDK and Auth Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        // Firebase configuration (update with your config if needed)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCYQOyBslYju7AcCDcJ-Kgjgd1LV5vz3hU",
+            authDomain: "stock-ai-platform-33312.firebaseapp.com",
+            projectId: "stock-ai-platform-33312",
+            storageBucket: "stock-ai-platform-33312.firebasestorage.app",
+            messagingSenderId: "240115357998",
+            appId: "1:240115357998:web:d020eaf79abc22b35782bf"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Utility functions
+        function showAlert(message, type = 'danger') {
+            const alertContainer = document.getElementById('alertContainer');
+            clearAlerts();
+            const alertHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" onclick="clearAlerts()"></button>
+                </div>
+            `;
+            alertContainer.innerHTML = alertHTML;
+        }
+
+        function clearAlerts() {
+            document.getElementById('alertContainer').innerHTML = '';
+        }
+
+        function setButtonLoading(buttonId, isLoading) {
+            const btn = document.getElementById(buttonId);
+            if (isLoading) {
+                btn.classList.add('loading');
+                btn.disabled = true;
+            } else {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+
+        function getFirebaseErrorMessage(code) {
+            const errorMessages = {
+                'auth/email-already-in-use': 'Email already in use. Please sign in instead.',
+                'auth/invalid-email': 'Invalid email address.',
+                'auth/weak-password': 'Password is too weak. Use at least 6 characters.',
+                'auth/user-not-found': 'No account found with this email.',
+                'auth/wrong-password': 'Incorrect password.',
+                'auth/too-many-requests': 'Too many login attempts. Please try again later.',
+                'auth/operation-not-allowed': 'This operation is not allowed.',
+                'auth/network-request-failed': 'Network error. Please check your internet connection.'
+            };
+            return errorMessages[code] || 'Authentication failed: ' + code;
+        }
+
+        // Auth form toggle
+        function toggleAuthForm() {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const toggleText = document.getElementById('toggleText');
+
+            loginForm.classList.toggle('hidden');
+            signupForm.classList.toggle('hidden');
+
+            if (loginForm.classList.contains('hidden')) {
+                toggleText.innerHTML = 'Already have an account? <a id="toggleLink">Sign In</a>';
+            } else {
+                toggleText.innerHTML = 'Don\'t have an account? <a id="toggleLink">Sign Up</a>';
+            }
+
+            clearAlerts();
+
+            // Re-attach toggle event
+            setTimeout(() => {
+                const toggleLink = document.getElementById('toggleLink');
+                if (toggleLink) toggleLink.addEventListener('click', toggleAuthForm);
+            }, 0);
+        }
+
+        // Signup handler
+        async function handleSignup() {
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!email || !password || !confirmPassword) {
+                showAlert('Please fill in all fields', 'warning');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match', 'danger');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('Password must be at least 6 characters', 'warning');
+                return;
+            }
+
+            setButtonLoading('signupBtn', true);
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                const idToken = await user.getIdToken();
+
+                // Store Firebase token in localStorage
+                localStorage.setItem('idToken', idToken);
+                localStorage.setItem('userEmail', user.email);
+
+                // Create Flask session
+                const sessionResponse = await fetch('/session-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ idToken: idToken })
+                });
+
+                if (!sessionResponse.ok) {
+                    throw new Error('Failed to create session');
+                }
+
+                showAlert('Account created successfully! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1000);
+            } catch (error) {
+                const errorMessage = getFirebaseErrorMessage(error.code || error.message);
+                showAlert(errorMessage, 'danger');
+                setButtonLoading('signupBtn', false);
+            }
+        }
+
+        // Login handler
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showAlert('Please enter email and password', 'warning');
+                return;
+            }
+
+            setButtonLoading('loginBtn', true);
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                const idToken = await user.getIdToken();
+
+                // Store Firebase token in localStorage
+                localStorage.setItem('idToken', idToken);
+                localStorage.setItem('userEmail', user.email);
+
+                // Create Flask session
+                const sessionResponse = await fetch('/session-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ idToken: idToken })
+                });
+
+                if (!sessionResponse.ok) {
+                    throw new Error('Failed to create session');
+                }
+
+                showAlert('Login successful! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1000);
+            } catch (error) {
+                const errorMessage = getFirebaseErrorMessage(error.code || error.message);
+                showAlert(errorMessage, 'danger');
+                setButtonLoading('loginBtn', false);
+            }
+        }
+
+        // Attach event listeners after DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show login form by default
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('signupForm').classList.add('hidden');
+
+            // Toggle link
+            const toggleLink = document.querySelector('.toggle-auth a');
+            if (toggleLink) toggleLink.addEventListener('click', toggleAuthForm);
+
+            // Button handlers
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
+            document.getElementById('signupBtn').addEventListener('click', handleSignup);
+
+            // Enter key submits correct form
+            document.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    const loginForm = document.getElementById('loginForm');
+                    const signupForm = document.getElementById('signupForm');
+                    if (!loginForm.classList.contains('hidden')) {
+                        handleLogin();
+                    } else if (!signupForm.classList.contains('hidden')) {
+                        handleSignup();
+                    }
+                }
+            });
+        });
+
+        // Expose logout for other pages
+        window.logout = async function() {
+            await signOut(auth);
+            localStorage.removeItem('idToken');
+            localStorage.removeItem('userEmail');
+            window.location.href = '/login';
+        };
+    </script>
+</body>
+</html>

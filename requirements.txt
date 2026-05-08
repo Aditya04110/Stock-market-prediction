@@ -1,0 +1,26 @@
+# Stock Market Prediction Web Application - Requirements
+# Backend Server Dependencies
+
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# Machine Learning & Data Science
+tensorflow==2.15.0
+scikit-learn==1.3.2
+pandas==2.1.4
+numpy==1.26.2
+
+# Visualization
+matplotlib==3.8.2
+
+# Stock Data (Optional)
+yfinance==0.2.33
+
+# Utilities
+python-dateutil==2.8.2
+Werkzeug==3.0.1
+
+# Development (Optional)
+pytest==7.4.3
+black==23.12.1

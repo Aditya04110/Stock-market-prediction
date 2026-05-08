@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Prediction - Stock Prediction AI</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar">
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line"></i> Stock Prediction AI
+            </a>
+            <div class="navbar-nav">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/prediction" class="nav-link active">
+                    <i class="fas fa-crystal-ball"></i> Prediction
+                </a>
+                <div class="nav-divider"></div>
+                <span class="text-secondary" style="font-size: 0.9rem;">
+                    <i class="fas fa-user-circle"></i> <span id="username">User</span>
+                </span>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="page-container">
+        <div class="container">
+            <div class="content-wrapper">
+                <!-- Page Title -->
+                <div style="margin-bottom: 2rem;">
+                    <h1 style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                        Stock Prediction
+                    </h1>
+                    <p style="color: var(--text-secondary); margin: 0.5rem 0 0 0;">
+                        AI-powered price forecasting with LSTM neural networks
+                    </p>
+                </div>
+
+                <!-- Input Section -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-search"></i> Enter Stock Symbol
+                        </h3>
+                    </div>
+                    <div class="card-body" style="padding: 1.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; align-items: flex-end;">
+                            <div class="form-group" style="position: relative;">
+                                <label class="form-label">Stock Symbol</label>
+                                <input type="text" class="form-input" id="stockSymbolInput" 
+                                       placeholder="e.g., RELIANCE.NS, INFY.NS, TCS.NS" 
+                                       value="RELIANCE.NS"
+                                       autocomplete="off">
+                                <!-- Autocomplete Dropdown -->
+                                <div id="stockAutocompleteDropdown" class="stock-autocomplete-dropdown" style="display: none;">
+                                    <ul id="stockSuggestionsList" class="stock-suggestions-list"></ul>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Prediction Days</label>
+                                <input type="number" class="form-input" id="predictionDaysInput" 
+                                       placeholder="15" value="15" min="1" max="30">
+                            </div>
+                        </div>
+                        
+                        <!-- Data Loading Status -->
+                        <div id="dataStatusSection" style="margin: 1rem 0; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 4px solid var(--accent-blue); display: none;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <span id="dataStatusIcon">📊</span>
+                                <span id="dataStatusText" style="color: var(--text-secondary); font-size: 0.9rem;">No data loaded</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Control Buttons -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <button class="btn-primary btn-lg" id="loadLiveDataBtn" onclick="loadLiveData()" style="width: 100%; height: 42px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <i class="fas fa-globe"></i> Load Live Data
+                            </button>
+                            <button class="btn-secondary btn-lg" id="loadSampleDataBtn" onclick="loadSampleData()" style="width: 100%; height: 42px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <i class="fas fa-database"></i> Use Sample Data
+                            </button>
+                            <button class="btn-primary btn-lg" id="predictBtn" onclick="predictStock()" style="width: 100%; height: 42px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <i class="fas fa-crystal-ball"></i> Predict
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Pipeline Status -->
+                <div class="card" id="pipelineSection" style="margin-bottom: 2rem; display: none;">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-cogs"></i> Model Pipeline Status
+                        </h3>
+                    </div>
+                    <div class="card-body" style="padding: 1.5rem;">
+                        <!-- Progress Bar -->
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.9rem; color: var(--text-secondary);">Overall Progress</span>
+                                <span id="progressPercent" style="font-weight: 600; color: var(--accent-blue);">0%</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="progressBarFill"></div>
+                            </div>
+                        </div>
+
+                        <!-- Pipeline Steps -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                            <div class="pipeline-step" id="step-fetch">
+                                <div class="step-indicator pending">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <div class="step-label">Data Fetched</div>
+                                <div class="step-status">Waiting...</div>
+                            </div>
+
+                            <div class="pipeline-step" id="step-preprocess">
+                                <div class="step-indicator pending">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <div class="step-label">Data Preprocessed</div>
+                                <div class="step-status">Waiting...</div>
+                            </div>
+
+                            <div class="pipeline-step" id="step-train">
+                                <div class="step-indicator pending">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <div class="step-label">Training LSTM</div>
+                                <div class="step-status">Waiting...</div>
+                            </div>
+
+                            <div class="pipeline-step" id="step-eval">
+                                <div class="step-indicator pending">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <div class="step-label">Evaluating Model</div>
+                                <div class="step-status">Waiting...</div>
+                            </div>
+
+                            <div class="pipeline-step" id="step-predict">
+                                <div class="step-indicator pending">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <div class="step-label">Generating Prediction</div>
+                                <div class="step-status">Waiting...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Predictions Grid -->
+                <div class="grid grid-2" style="margin-bottom: 2rem;">
+                    <!-- Current Price Card -->
+                    <div class="card" id="currentPriceCard">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-dollar-sign"></i> Current Price
+                            </h3>
+                            <div class="status-badge live-data" id="dataStatusBadge">
+                                <span class="status-dot"></span>
+                                Live Data
+                            </div>
+                        </div>
+
+                        <div class="card-body" style="padding: 2rem 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                            <div style="font-size: 2.8rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 0.75rem;">
+                                <span id="current-price">--</span>
+                            </div>
+                            <div style="color: var(--text-secondary); margin-bottom: 1.25rem; font-size: 1.1rem;">
+                                <span id="current-price-label">No data</span>
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fas fa-clock"></i> <span id="current-price-time">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Next Day Prediction Card -->
+                    <div class="card" id="nextPriceCard">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 class="card-title" style="margin: 0;">
+                                <i class="fas fa-arrow-trend-up"></i> Next Day Prediction
+                            </h3>
+                            <div class="model-status-indicator" id="modelStatus">
+                                <span class="status-dot training"></span>
+                                <span class="status-text">Training...</span>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 1.5rem;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent-green);">
+                                    <span id="next-price">--</span>
+                                </div>
+                                <div style="color: var(--text-secondary); margin-top: 0.5rem;">
+                                    <span id="next-price-change">No prediction</span>
+                                </div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 1rem;">
+                                    Expected change from current
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid" style="margin-bottom: 2rem;">
+                    <!-- Forecast Chart -->
+                    <div class="chart-card">
+                        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color);">
+                            <div class="chart-title">
+                                <i class="fas fa-chart-area"></i>
+                                <span id="forecast-title">Price Forecast (15 Days)</span>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="forecastChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Prediction vs Actual Chart -->
+                    <div class="chart-card" style="margin-top: 2rem;">
+                        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color);">
+                            <div class="chart-title">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Model Performance (Prediction vs Actual)</span>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Info -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-info-circle"></i> Model Information
+                        </h3>
+                    </div>
+                    <div class="card-body" style="padding: 1.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                            <div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Model Type
+                                </div>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 0.5rem;">
+                                    LSTM RNN
+                                </div>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Lookback Period
+                                </div>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 0.5rem;">
+                                    10 Days
+                                </div>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Accuracy Metric
+                                </div>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 0.5rem;">
+                                    <span id="model-accuracy">--</span> MAPE
+                                </div>
+                            </div>
+                            <div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Status
+                                </div>
+                                <div style="margin-top: 0.5rem;">
+                                    <span class="badge badge-success">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.85rem;">
+                    <strong>B.Sc. IT Final Year Project</strong> | 
+                    Students: Mansi Nagda (145), Aditya Chaudhari (111) | 
+                    Guide: Mrs. Archana Jadhav | 
+                    Anna Leela College, University of Mumbai
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="/static/js/prediction.js"></script>
+    
+</body>
+</html>
