@@ -2,8 +2,8 @@
 Stock Market Prediction - Backend API Server
 Flask REST API with TensorFlow LSTM Model
 
-Authors: Mansi Nagda (145), Aditya Chaudhari (111)
-Guide: Mr. Dhanraj Jadhav
+Authors: Aditya Chaudhari (111)
+
 """
 from typing import Optional
 from flask import request, redirect, session, url_for
